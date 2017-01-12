@@ -6,6 +6,7 @@
  * Time: 14:53
  */
 require_once './Twig-1.30.0/lib/Twig/Autoloader.php';
+Twig_Autoloader::register();
 $loader = new Twig_Loader_Filesystem('./');
 $twig = new Twig_Environment($loader,
     array(
