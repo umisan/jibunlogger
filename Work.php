@@ -43,7 +43,13 @@ class Work
                 $this->endTime);
         }
         var_dump($query);
-        $result = Database::issue($query);
+        $state = Database::issue($query);
+        $insertedId = mysql_insert_id();
+
+        $result = array(
+            'state' => $state,
+            'id' => $insertedId,
+        );
         return $result;
     }
 }
