@@ -133,6 +133,8 @@ if($status === '0')
 if($renderFlag)
 {
     $temp = $_COOKIE['PHPSESSID'];
+    //指定された日時のワークを取得
+
     $template = $twig->load('main.twig');
     echo $template->render(array(
         'processing' => $_SESSION[$temp]['processing'],

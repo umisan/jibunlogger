@@ -52,4 +52,19 @@ class Work
         );
         return $result;
     }
+
+    public function toArray(){
+        //要テスト
+        $start = new DateTime($this->startTime);
+        $end = new DateTime($this->endTime);
+        $diff = $start->diff($end);
+        $diffHour = Number($diff->format("H"));
+        $diffMinute = Number($diff->format("i"));
+        $diffResult = $diffHour + $diffMinute / 60;
+        $result = array(
+            "name" => $this->workName,
+            "diff" => $diffResult,
+        );
+        return $result;
+    }
 }

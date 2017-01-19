@@ -1,35 +1,108 @@
 <!DOCTYPE html>
 <html lang="jp">
 <head>
-    <title>Bootstrap Example</title>
+    <title>自分ロガー</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="./css/bootstrap.min.css" type="text/css">
+    <link rel="stylesheet" href="./bootstrap-datepicker-1.6.4-dist/css/bootstrap-datepicker.min.css">
+    <script src="./bootstrap-datepicker-1.6.4-dist/js/bootstrap-datepicker.min.js"></script>
+    <script src="./js/moment-with-locales.js"></script>
     <script src="./js/jquery-3.1.1.min.js"></script>
     <script src="./js/bootstrap.min.js"></script>
+    <script src="./Snap.svg-0.4.1/dist/snap.svg-min.js"></script>
+    <script language="JavaScript" type="text/javascript">
+        function inputSubmit() {
+            if(window.event.keyCode == 13) {
+                var target = document.getElementById("input");
+                target.method = "POST";
+                target.submit();
+            }
+        }
+    </script>
+    <style>
+        #graph{
+            width: 600px;
+            height: 600px;
+            margin: 80px auto;
+        }
+    </style>
 </head>
 <body>
 
-<div class="container-fluid">
-    <h1>My First Bootstrap Page</h1>
-    <p>This is some text.</p>
+<div class="container">
+    <h1>自分ロガー</h1>
+    <p>毎日の生活をきろくしよう</p>
 </div>
-<div class="row">
-    <div class="col-md-4">col-md-4</div>
-    <div class="col-md-4">col-md-4</div>
-    <div class="col-md-4">col-md-4</div>
+<div class="container">
+    <form id="input" action="./main.php?status=1" method="POST">
+        <div class="form-group">
+            <label for="usrInput">入力</label>
+            <input type="text" class="form-control" id="usrInput" name="usrInput" onkeydown="inputSubmit()">
+        </div>
+    </form>
 </div>
-<div class="form-group">
-    <label for="usr">Name:</label>
-    <input type="text" class="form-control" id="usr">
+<div class="container">
+        <form id="date" class="form-inline" action="./main.php" method="POST">
+            <div class="form-group">
+                <label for="year">年</label>
+                <input type="text" class="form-control" id="year">
+            </div>
+            <div class="form-group">
+                <label for="month">月</label>
+                <input type="text" class="form-control" id="month">
+            </div>
+            <div class="form-groupl">
+                <label for="day">日</label>
+                <input type="text" class="form-control" id="day">
+            </div>
+        </form>
 </div>
-<div class="form-group">
-    <label for="pwd">Password:</label>
-    <input type="password" class="form-control" id="pwd">
-</div>
-<div class="form-group">
-    <label for="comment">Comment:</label>
-    <textarea class="form-control" rows="5" id="comment"></textarea>
+<div class="container">
+    <!-- グラフの描画領域 -->
+    <div id="graph">
+        <svg id="svg" viewBox="0 0 600 600" width="600" height="600"></svg>
+    </div>
+    <!-- ページネーション -->
 </div>
 </body>
 </html>
+<script>
+    var snap = new Snap("#svg");
+    //グラフの軸の生成
+    var graphHeight = snap.node.clientHeight;
+    var graphWidth = snap.node.clientWidth;
+    var axisWidth = 2;
+    var scaleLength = 20;
+    var hline = snap.line(scaleLength, graphHeight - axisWidth / 2, graphWidth, graphHeight - axisWidth / 2);
+    hline.attr({
+        stroke: "black",
+        strokeWidth: 2,
+    });
+    var vline = snap.line(scaleLength, 0, scaleLength, graphHeight);
+    vline.attr({
+       stroke: "black",
+        strokeWidth: 2,
+    });
+    var scales = [];
+    for(var index = 0; index < 24; index++)
+    {
+        var currentHeignt = graphHeight - (graphHeight / 24) * index;
+        console.log(currentHeignt);
+        if(index == 0)
+        {
+            console.log("aaa");
+            var scale = snap.line(scaleLength,currentHeignt - 0.5, scaleLength * 2, currentHeignt - 0.5);
+        }else{
+            var scale = snap.line(scaleLength,currentHeignt, scaleLength * 2, currentHeignt);
+        }
+        scale.attr({
+            stroke: "black",
+            strokeWidth: 1,
+        });
+        scales.push(scale);
+        var text = snap.text(0, currentHeignt, String(index));
+    }
+    //タスクの描画
+
+</script>
