@@ -16,6 +16,13 @@
                 target.submit();
             }
         }
+        function dateSubmit() {
+            if(window.event.keyCode = 13) {
+                var target = document.getElementById("dataInput");
+                target.method = "POST";
+                target.submit();
+            }
+        }
     </script>
     <style>
         #graph{
@@ -46,12 +53,12 @@
     {% endif %}
 </div>
 <div class="container">
-    <ul class="nav nav-tabs">
-        <li class="active"><a href="#">日</a> </li>
-        <li><a href="#">週</a> </li>
-        <li><a href="#">月</a> </li>
-        <li><a href="#">年</a> </li>
-    </ul>
+    <form id="date" action="./main.php" method="POST">
+        <div class="form-group">
+            <label for="dateInput">日付</label>
+            <input type="text" class="form-control" id="dateInput" name="dateInput" onkeydown="dateSubmit()">
+        </div>
+    </form>
 </div>
 <div class="container">
     <!-- グラフの描画領域 -->
@@ -64,14 +71,40 @@
 </html>
 <script>
     var snap = new Snap("#svg");
-    //グラフの高さ 24 * 100pxとする（とりあえず）
+    //グラフの軸の生成
     var graphHeight = snap.node.clientHeight;
     var graphWidth = snap.node.clientWidth;
-    console.log(graphWidth);
-    console.log(graphHeight);
-    var hline = snap.line(0, graphHeight, graphWidth, graphHeight);
+    var axisWidth = 2;
+    var scaleLength = 20;
+    var hline = snap.line(scaleLength, graphHeight - axisWidth / 2, graphWidth, graphHeight - axisWidth / 2);
     hline.attr({
-       stroke: "purple",
-        strokeWidth: 1,
+        stroke: "black",
+        strokeWidth: 2,
     });
+    var vline = snap.line(scaleLength, 0, scaleLength, graphHeight);
+    vline.attr({
+        stroke: "black",
+        strokeWidth: 2,
+    });
+    var scales = [];
+    for(var index = 0; index < 24; index++)
+    {
+        var currentHeignt = graphHeight - (graphHeight / 24) * index;
+        console.log(currentHeignt);
+        if(index == 0)
+        {
+            console.log("aaa");
+            var scale = snap.line(scaleLength,currentHeignt - 0.5, scaleLength * 2, currentHeignt - 0.5);
+        }else{
+            var scale = snap.line(scaleLength,currentHeignt, scaleLength * 2, currentHeignt);
+        }
+        scale.attr({
+            stroke: "black",
+            strokeWidth: 1,
+        });
+        scales.push(scale);
+        var text = snap.text(0, currentHeignt, String(index));
+    }
+    //タスクの描画
+
 </script>

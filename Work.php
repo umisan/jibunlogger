@@ -58,12 +58,14 @@ class Work
         $start = new DateTime($this->startTime);
         $end = new DateTime($this->endTime);
         $diff = $start->diff($end);
-        $diffHour = Number($diff->format("H"));
-        $diffMinute = Number($diff->format("i"));
-        $diffResult = $diffHour + $diffMinute / 60;
+        $diffFormated = $diff->format("%H/%I");
+        $hour = (integer)explode('/', $diffFormated)[0];
+        $minute = (integer)explode('/', $diffFormated)[1];
+        echo $minute;
+        $total = $hour + $minute / 60;
         $result = array(
             "name" => $this->workName,
-            "diff" => $diffResult,
+            "diff" => $total,
         );
         return $result;
     }

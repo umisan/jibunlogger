@@ -32,9 +32,6 @@ $user_name = $_POST['userName'];
 $password = $_POST['userPassword'];
 $status = $_GET['status'];
 $renderFlag = false;
-var_dump($user_name);
-var_dump($password);
-var_dump($_GET['status']);
 
 //データベース用のコネクション
 $link = Database::connect();
@@ -99,6 +96,7 @@ if($status === '0')
     }
     $renderFlag = true;
 }elseif ($status === '2'){
+    //TODO 開始時間と終了時間の日付が違ったらそのワークを破棄する
     //ワークが終了
     //sessionが有効でなかったらリダイレクト
     if(!isset($_COOKIE['PHPSESSID']))
@@ -120,16 +118,46 @@ if($status === '0')
         $_SESSION[$temp]['work_id'] = null;
     }
     $renderFlag = true;
-}else{
-    //F5や直接アクセスされた時
-    if(!isset($_COOKIE['PHPSESSID']))
-    {
-        //loginページへリダイレクト
-        header('Location: login.php');
-        exit();
-    }
-    $renderFlag = true;
 }
+//F5や直接アクセスされた時
+if(!isset($_COOKIE['PHPSESSID']))
+{
+    //loginページへリダイレクト
+    header('Location: login.php');
+    exit();
+}
+$renderFlag = true;
+
+//対象のワークの取得
+$session_id = $_COOKIE['PHPSESSID'];
+$user_id = $_SESSION[$temp]['user_id'];
+if(!isset($_POST['dateInput']) || $_POST['dateInput'] === '')
+{
+    $targetStartDate = date("Y-m-d H:i:s");
+    $targetStartDate = explode(" ",$targetStartDate)[0]. ' 00:00:00';
+    $targetEndDate = explode(' ', $targetStartDate)[0]. '23:59:59';
+}else{
+    //時刻が指定された
+    $targetDate = $_POST['dateInput'];
+    $targetDate = explode('/', $targetDate);
+    $targetDate = "{$targetDate[0]}-{$targetDate[1]}-{$targetDate[2]} 00:00:00";
+    $targetEndDate = explode(' ', $targetStartDate)[0]. ' 23:59:59';
+}
+
+$query = sprintf("SELECT * FROM work WHERE start_time>=\"%s\" AND end_time<=\"%s\" AND user_id=%d", $targetStartDate, $targetEndDate, $user_id);
+$result = Database::issue($query);
+$works = array();
+if(!$result)
+{
+    echo 'データの取得に失敗しました';
+}else{
+    while ($row = mysql_fetch_assoc($result))
+    {
+        $work = new Work($row['user_id'], $row['work_name'], $row['start_time'], $row['end_time'], '');
+        array_push($works, $work->toArray());
+    }
+}
+
 if($renderFlag)
 {
     $temp = $_COOKIE['PHPSESSID'];
@@ -138,6 +166,7 @@ if($renderFlag)
     $template = $twig->load('main.twig');
     echo $template->render(array(
         'processing' => $_SESSION[$temp]['processing'],
+        'works' => $works,
     ));
 }
 ?>
