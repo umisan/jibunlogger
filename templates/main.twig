@@ -27,7 +27,7 @@
     <style>
         #graph{
             width: 600px;
-            height: 600px;
+            height: 1000px;
             margin: 80px auto;
         }
     </style>
@@ -63,27 +63,28 @@
 <div class="container">
     <!-- グラフの描画領域 -->
     <div id="graph">
-        <svg id="svg" viewBox="0 0 600 600" width="600" height="600"></svg>
+        <svg id="svg" viewBox="0 0 600 1000" width="600" height="1000"></svg>
     </div>
     <!-- ページネーション -->
 </div>
-</body>
-</html>
-<script>
+<script language="javascript" type="text/javascript">
     var snap = new Snap("#svg");
     //グラフの軸の生成
     var graphHeight = snap.node.clientHeight;
     var graphWidth = snap.node.clientWidth;
     var axisWidth = 2;
     var scaleLength = 20;
+    var workObjWidth = 300;
+    var offset = 150;
+    var fontSize = 20;
     var hline = snap.line(scaleLength, graphHeight - axisWidth / 2, graphWidth, graphHeight - axisWidth / 2);
     hline.attr({
-        stroke: "black",
+        stroke: "#302833",
         strokeWidth: 2,
     });
     var vline = snap.line(scaleLength, 0, scaleLength, graphHeight);
     vline.attr({
-        stroke: "black",
+        stroke: "#302833",
         strokeWidth: 2,
     });
     var scales = [];
@@ -99,12 +100,32 @@
             var scale = snap.line(scaleLength,currentHeignt, scaleLength * 2, currentHeignt);
         }
         scale.attr({
-            stroke: "black",
+            stroke: "#302833",
             strokeWidth: 1,
         });
         scales.push(scale);
         var text = snap.text(0, currentHeignt, String(index));
     }
     //タスクの描画
-
+    {% for work in works %}
+        var workObj = {{ work | json_encode | raw }};
+        var workObjEndHeight =  graphHeight - (graphHeight / 24) * workObj['diff'];
+        var workObjeStartHeight = graphHeight - (graphHeight / 24) * workObj['start'];
+        var workObjHeight = (graphHeight / 24) * workObj['diff'];
+        console.log(workObj['name']);
+        console.log(workObjeStartHeight);
+        var workObjRect = snap.rect(offset, workObjeStartHeight - workObjHeight, workObjWidth, workObjHeight);
+        workObjRect.attr({
+            fill: "#FFFFFF",
+            stroke: "#302833",
+            strokeWidth: 1,
+        })
+        var workName = snap.text(offset + workObjWidth / 2 - (workObj['name'].length * fontSize) / 2, workObjeStartHeight - workObjHeight / 2 + fontSize / 2, workObj['name']);
+        workName.attr({
+            'font-size': fontSize,
+            fill: "#302833",
+        })
+    {% endfor %}
 </script>
+</body>
+</html>

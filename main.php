@@ -130,20 +130,21 @@ $renderFlag = true;
 
 //対象のワークの取得
 $session_id = $_COOKIE['PHPSESSID'];
-$user_id = $_SESSION[$temp]['user_id'];
+$user_id = $_SESSION[$session_id]['user_id'];
 if(!isset($_POST['dateInput']) || $_POST['dateInput'] === '')
 {
     $targetStartDate = date("Y-m-d H:i:s");
-    $targetStartDate = explode(" ",$targetStartDate)[0]. ' 00:00:00';
-    $targetEndDate = explode(' ', $targetStartDate)[0]. '23:59:59';
+    $temp = explode(" ", $targetStartDate);
+    $targetStartDate = $temp[0]. ' 00:00:00';
+    $targetEndDate = $temp[0]. '23:59:59';
 }else{
     //時刻が指定された
     $targetDate = $_POST['dateInput'];
     $targetDate = explode('/', $targetDate);
-    $targetDate = "{$targetDate[0]}-{$targetDate[1]}-{$targetDate[2]} 00:00:00";
-    $targetEndDate = explode(' ', $targetStartDate)[0]. ' 23:59:59';
+    $targetStartDate = "{$targetDate[0]}-{$targetDate[1]}-{$targetDate[2]} 00:00:00";
+    $temp = explode(" ", $targetStartDate);
+    $targetEndDate = $temp[0]. ' 23:59:59';
 }
-
 $query = sprintf("SELECT * FROM work WHERE start_time>=\"%s\" AND end_time<=\"%s\" AND user_id=%d", $targetStartDate, $targetEndDate, $user_id);
 $result = Database::issue($query);
 $works = array();
@@ -151,13 +152,12 @@ if(!$result)
 {
     echo 'データの取得に失敗しました';
 }else{
-    while ($row = mysql_fetch_assoc($result))
-    {
+    while ($row = mysql_fetch_assoc($result)) {
         $work = new Work($row['user_id'], $row['work_name'], $row['start_time'], $row['end_time'], '');
         array_push($works, $work->toArray());
     }
 }
-
+//var_dump($works);
 if($renderFlag)
 {
     $temp = $_COOKIE['PHPSESSID'];
