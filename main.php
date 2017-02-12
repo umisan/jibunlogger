@@ -9,6 +9,34 @@ require_once './Twig-1.30.0/lib/Twig/Autoloader.php';
 require_once './database.php';
 require_once './Work.php';
 
+//入力解析関数
+//input例
+//work color=#FFFFF
+//出力例
+//name => work
+//color => #FFFFF
+function parser($inputString)
+{
+    $spaceExploded = explode(" ", $inputString);
+    $namePart = "";
+    $colorPart = "";
+    foreach ($spaceExploded as $key => $value){
+        if(strpos($value, 'color') === false)
+        {
+            $namePart = $value;
+        }else{
+            $colorPart = $value;
+        }
+    }
+    $temp = explode("=", $colorPart);
+    $result = array(
+        'name' => $namePart,
+        'color' => $temp[1],
+    );
+    var_dump($result);
+    return $result;
+}
+
 //sessionの開始
 /*
  * sessionIDに紐付けるデータの形式
@@ -37,6 +65,9 @@ $renderFlag = false;
 $link = Database::connect();
 $selected = Database::selectDatabase($link);
 
+//タイムゾーンの設定
+date_default_timezone_set('Asia/Tokyo');
+
 //TODO 定数にする
 if($status === '0')
 {
@@ -55,7 +86,6 @@ if($status === '0')
         exit();
     }
     $query = "SELECT pass, user_id FROM user WHERE user_name=\"{$user_name}\"";
-    var_dump($query);
     $result = Database::issue($query);
     $result = mysql_fetch_assoc($result);
     if($result['pass'] === $password)
@@ -75,7 +105,6 @@ if($status === '0')
     }
 }elseif ($status === '1') {
     //ワークの追加
-    var_dump($_POST['usrInput']);
     //sessionが有効でなかったらリダイレクト
     if (!isset($_COOKIE['PHPSESSID'])) {
         //loginページへリダイレクト
@@ -145,7 +174,7 @@ if(!isset($_POST['dateInput']) || $_POST['dateInput'] === '')
     $temp = explode(" ", $targetStartDate);
     $targetEndDate = $temp[0]. ' 23:59:59';
 }
-$query = sprintf("SELECT * FROM work WHERE start_time>=\"%s\" AND end_time<=\"%s\" AND user_id=%d", $targetStartDate, $targetEndDate, $user_id);
+$query = sprintf("SELECT * FROM work WHERE start_time>=\"%s\" AND end_time<=\"%s\" AND user_id=%d ORDER BY start_time ASC", $targetStartDate, $targetEndDate, $user_id);
 $result = Database::issue($query);
 $works = array();
 if(!$result)
@@ -158,6 +187,54 @@ if(!$result)
     }
 }
 //var_dump($works);
+
+//睡眠時間との重なりを計算
+$query = sprintf("SELECT sleep_time, wakeup_time From user WHERE user_id=%d", $user_id);
+$result = Database::issue($query);
+$result = mysql_fetch_assoc($result);
+$exploded = explode(':', $result['sleep_time']);
+$sleep_time = (float)$exploded[0] + ((float)$exploded[1] / 60);
+$exploded = explode(':', $result['wakeup_time']);
+$wakeup_time = (float)$exploded[0] + ((float)$exploded[1] / 60);
+var_dump($sleep_time);
+var_dump($wakeup_time);
+$sleep = array();
+$wakeup = array();
+$maxcount = count($works) - 1;
+if($maxcount < 0) $maxcount = 0;
+if($works[0]['start'] >= $wakeup_time || $maxcount === 0)
+{
+    $wakeup = array(
+        "name" => '睡眠',
+        "diff" => $wakeup_time,
+        "start" => 0,
+    );
+}else{
+    $wakeup = array(
+        "name" => '睡眠',
+        "diff" => $works[0]['start'],
+        "start" => 0,
+    );
+}
+if($works[$maxcount]['start'] + $works[$maxcount]['diff'] < $sleep_time)
+{
+    $sleep = array(
+        "name" => '睡眠',
+        "diff" => 24 - $sleep_time,
+        "start" => $sleep_time,
+    );
+}else{
+    $sleep = array(
+        "name" => '睡眠',
+        "diff" => 24 - $works[$maxcount]['start'] - $works[$maxcount]['diff'],
+        "start" => $works[$maxcount]['start'] + $works[$maxcount]['diff'],
+    );
+}
+array_push($works, $wakeup);
+array_push($works, $sleep);
+
+
+
 if($renderFlag)
 {
     $temp = $_COOKIE['PHPSESSID'];

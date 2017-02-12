@@ -56,17 +56,17 @@ class Work
     public function toArray(){
         //要テスト
         $start = new DateTime($this->startTime);
-        $startFormated = $start->format("H/I");
+        $startFormated = $start->format("H/i");
         $temp = explode('/', $startFormated);
-        $startTime = (integer)$temp[0] + ((integer)$temp[1] / 60);
+        var_dump($startFormated);
+        $startTime = (float)$temp[0] + ((float)$temp[1] / 60);
         $end = new DateTime($this->endTime);
         $diff = $start->diff($end);
         $diffFormated = $diff->format("%H/%I");
         $temp = explode('/', $diffFormated);
-        $hour = (integer)$temp[0];
-        $minute = (integer)$temp[1];
+        $hour = (float)$temp[0];
+        $minute = (float)$temp[1];
         $total = $hour + ($minute / 60);
-        var_dump($startFormated);
         $result = array(
             "name" => $this->workName,
             "diff" => $total,
