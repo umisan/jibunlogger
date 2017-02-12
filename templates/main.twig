@@ -111,7 +111,14 @@
         var workObj = {{ work | json_encode | raw }};
         var workObjEndHeight =  graphHeight - (graphHeight / 24) * workObj['diff'];
         var workObjeStartHeight = graphHeight - (graphHeight / 24) * workObj['start'];
-        var workObjHeight = (graphHeight / 24) * workObj['diff'];
+        var workObjHeight = (graphHeight / 24) * workObj['diff']
+        if(workObjHeight < 20)
+        {
+            fontSize = workObjHeight;
+        }else{
+            fontSize = 20;
+        }
+
         console.log(workObj['name']);
         console.log(workObjeStartHeight);
         var workObjRect = snap.rect(offset, workObjeStartHeight - workObjHeight, workObjWidth, workObjHeight);
@@ -121,7 +128,7 @@
             strokeWidth: 1,
         })
         //var workName = snap.text(offset + workObjWidth / 2 - (workObj['name'].length * fontSize) / 2, workObjeStartHeight - workObjHeight / 2 + fontSize / 2, workObj['name']);
-        var workName = snap.text(offset, workObjeStartHeight - workObjHeight + fontSize, workObj['name']);
+        var workName = snap.text(offset, workObjeStartHeight - workObjHeight + fontSize - 2, workObj['name']);
         workName.attr({
             'font-size': fontSize,
             fill: "#302833",

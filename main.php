@@ -9,34 +9,6 @@ require_once './Twig-1.30.0/lib/Twig/Autoloader.php';
 require_once './database.php';
 require_once './Work.php';
 
-//入力解析関数
-//input例
-//work color=#FFFFF
-//出力例
-//name => work
-//color => #FFFFF
-function parser($inputString)
-{
-    $spaceExploded = explode(" ", $inputString);
-    $namePart = "";
-    $colorPart = "";
-    foreach ($spaceExploded as $key => $value){
-        if(strpos($value, 'color') === false)
-        {
-            $namePart = $value;
-        }else{
-            $colorPart = $value;
-        }
-    }
-    $temp = explode("=", $colorPart);
-    $result = array(
-        'name' => $namePart,
-        'color' => $temp[1],
-    );
-    var_dump($result);
-    return $result;
-}
-
 //sessionの開始
 /*
  * sessionIDに紐付けるデータの形式
@@ -92,8 +64,8 @@ if($status === '0')
     {
         //ログイン成功
         $renderFlag = true;
-        $temp = $_COOKIE['PHPSESSID'];
-        $_SESSION[$temp] = array(
+        //$temp = $_COOKIE['PHPSESSID'];
+        $_SESSION['info'] = array(
             'user_id' => $result['user_id'],
             'processing' => false,
             'work_id' => '',
@@ -106,13 +78,19 @@ if($status === '0')
 }elseif ($status === '1') {
     //ワークの追加
     //sessionが有効でなかったらリダイレクト
-    if (!isset($_COOKIE['PHPSESSID'])) {
+    /*if (!isset($_COOKIE['PHPSESSID'])) {
+        //loginページへリダイレクト
+        header('Location: login.php');
+        exit();
+    }*/
+    if(!isset($_SESSION['info']))
+    {
         //loginページへリダイレクト
         header('Location: login.php');
         exit();
     }
     $temp = $_COOKIE['PHPSESSID'];
-    $user_id = $_SESSION[$temp]['user_id'];
+    $user_id = $_SESSION['info']['user_id'];
     $work_name = $_POST['usrInput'];
     $current_time = date('Y-m-d H:i:s');
     $work = new Work($user_id, $work_name, $current_time, $current_time, ''); //一時的に開始時間と終了時間を一致させておく。最終的に書き換える。
@@ -120,36 +98,66 @@ if($status === '0')
     if (!$result['state']) {
         echo 'データの追加に失敗しました';
     } else {
-        $_SESSION[$temp]['processing'] = true;
-        $_SESSION[$temp]['work_id'] = $result['id'];
+        $_SESSION['info']['processing'] = true;
+        $_SESSION['info']['work_id'] = $result['id'];
     }
     $renderFlag = true;
 }elseif ($status === '2'){
     //TODO 開始時間と終了時間の日付が違ったらそのワークを破棄する
     //ワークが終了
     //sessionが有効でなかったらリダイレクト
-    if(!isset($_COOKIE['PHPSESSID']))
+    /*if(!isset($_COOKIE['PHPSESSID']))
     {
+        header('Location: login.php');
+        exit();
+    }*/
+    if(!isset($_SESSION['info']))
+    {
+        //loginページへリダイレクト
         header('Location: login.php');
         exit();
     }
     //対象ワークの終了時間の変更
     $temp = $_COOKIE['PHPSESSID'];
-    $work_id = $_SESSION[$temp]['work_id'];
-    $current_time = date('Y-m-d H:i:s');
+    $work_id = $_SESSION['info']['work_id'];
+    //$current_time = date('Y-m-d H:i:s');
+    $current_time = "2017-02-13 20:00:00";
     $query = sprintf("UPDATE work SET end_time=\"%s\" WHERE work_id=%d", $current_time, $work_id);
     $result = Database::issue($query);
     if(!$result)
     {
         echo 'データの更新に失敗しました';
     }else{
-        $_SESSION[$temp]['processing'] = false;
-        $_SESSION[$temp]['work_id'] = null;
+        $_SESSION['info']['processing'] = false;
+        $_SESSION['info']['work_id'] = null;
+    }
+
+    //対象のワークを取得して、開始時間と終了時間のチェック
+    $query = sprintf("SELECT start_time, end_time FROM work WHERE work_id=%d", $work_id);
+    $result = Database::issue($query);
+    $result = mysql_fetch_assoc($result);
+    $start_time = $result['start_time'];
+    $end_time = $result['end_time'];
+    $start_time = explode(' ', $start_time);
+    $end_time = explode(' ', $end_time);
+    var_dump($start_time);
+    var_dump($end_time);
+    if($start_time[0] !== $end_time[0])
+    {
+        //違う日に終了が押されていたら破棄
+        $query = sprintf("DELETE FROM work WHERE work_id=%d", $work_id);
+        $result = Database::issue($query);
     }
     $renderFlag = true;
 }
 //F5や直接アクセスされた時
-if(!isset($_COOKIE['PHPSESSID']))
+/*if(!isset($_COOKIE['PHPSESSID']))
+{
+    //loginページへリダイレクト
+    header('Location: login.php');
+    exit();
+}*/
+if(!isset($_SESSION['info']))
 {
     //loginページへリダイレクト
     header('Location: login.php');
@@ -159,7 +167,7 @@ $renderFlag = true;
 
 //対象のワークの取得
 $session_id = $_COOKIE['PHPSESSID'];
-$user_id = $_SESSION[$session_id]['user_id'];
+$user_id = $_SESSION['info']['user_id'];
 if(!isset($_POST['dateInput']) || $_POST['dateInput'] === '')
 {
     $targetStartDate = date("Y-m-d H:i:s");
@@ -186,7 +194,6 @@ if(!$result)
         array_push($works, $work->toArray());
     }
 }
-//var_dump($works);
 
 //睡眠時間との重なりを計算
 $query = sprintf("SELECT sleep_time, wakeup_time From user WHERE user_id=%d", $user_id);
@@ -196,8 +203,6 @@ $exploded = explode(':', $result['sleep_time']);
 $sleep_time = (float)$exploded[0] + ((float)$exploded[1] / 60);
 $exploded = explode(':', $result['wakeup_time']);
 $wakeup_time = (float)$exploded[0] + ((float)$exploded[1] / 60);
-var_dump($sleep_time);
-var_dump($wakeup_time);
 $sleep = array();
 $wakeup = array();
 $maxcount = count($works) - 1;
@@ -216,7 +221,7 @@ if($works[0]['start'] >= $wakeup_time || $maxcount === 0)
         "start" => 0,
     );
 }
-if($works[$maxcount]['start'] + $works[$maxcount]['diff'] < $sleep_time)
+if($works[$maxcount]['start'] + $works[$maxcount]['diff'] < $sleep_time || $maxcount === 0)
 {
     $sleep = array(
         "name" => '睡眠',
@@ -233,6 +238,8 @@ if($works[$maxcount]['start'] + $works[$maxcount]['diff'] < $sleep_time)
 array_push($works, $wakeup);
 array_push($works, $sleep);
 
+var_dump($works);
+
 
 
 if($renderFlag)
@@ -242,7 +249,7 @@ if($renderFlag)
 
     $template = $twig->load('main.twig');
     echo $template->render(array(
-        'processing' => $_SESSION[$temp]['processing'],
+        'processing' => $_SESSION['info']['processing'],
         'works' => $works,
     ));
 }
