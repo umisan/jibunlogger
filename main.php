@@ -120,8 +120,8 @@ if($status === '0')
     //対象ワークの終了時間の変更
     $temp = $_COOKIE['PHPSESSID'];
     $work_id = $_SESSION['info']['work_id'];
-    //$current_time = date('Y-m-d H:i:s');
-    $current_time = "2017-02-13 20:00:00";
+    $current_time = date('Y-m-d H:i:s');
+    //$current_time = "2017-02-13 20:00:00";
     $query = sprintf("UPDATE work SET end_time=\"%s\" WHERE work_id=%d", $current_time, $work_id);
     $result = Database::issue($query);
     if(!$result)
